@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Comment;
 use App\ViewModels\MoviesViewModel;
 use App\ViewModels\MovieViewModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use function PHPUnit\Framework\isEmpty;
 
 class MoviesController extends Controller
 {
@@ -37,20 +40,6 @@ class MoviesController extends Controller
             ->get('https://api.themoviedb.org/3/genre/movie/list')
             ->json(['genres']);
 
-        // $genres = collect($genresArray)->mapWithKeys(function ($genre) {
-        //     return [$genre['id'] => $genre['name']];
-        // });
-
-        //dump($popularMovies);
-        // return view('index', [
-        //     'popularMovies' => $popularMovies,
-        //     'nowPlayingMovies' => $nowPlayingMovies,
-        //     'genres' => $genres,
-        //     'topRatedMovies' => $topRatedMovies,
-        //     'upcomingMovies' => $upcomingMovies
-        // ]);
-
-        //mengolah data api lewat Moviesviewmodel agar tidak di olah di controller
         $viewModel = new MoviesViewModel(
             $popularMovies,
             $nowPlayingMovies,
@@ -92,14 +81,17 @@ class MoviesController extends Controller
     public function show($id)
     {
         $movie = Http::withToken(config('services.tmdb.token'))
-            ->get('https://api.themoviedb.org/3/movie/' . $id . '?append_to_response=credits,videos,images') //?appen untuk actornya
+            ->get('https://api.themoviedb.org/3/movie/' . $id . '?append_to_response=credits,videos,images')
             ->json();
-
-        //dump($movie);
+        $myRating = null;
+        if(Auth::user()){
+            $myRating = auth()->user()->rate($movie['id']);
+        }
+        $allComments = Comment::where('tmdb_id', $movie['id'])->with('user:id,name')->get();
 
         $viewModel = new MovieViewModel($movie);
 
-        return view('movies.show', $viewModel);
+        return view('movies.show', $viewModel, ['myRating' => $myRating, 'allComments' => $allComments]);
     }
 
     /**
@@ -133,6 +125,29 @@ class MoviesController extends Controller
      */
     public function destroy($id)
     {
-        //
+
+    }
+
+    public function random()
+    {
+        do {
+            $random_id = mt_rand(1, 10000);
+            $movie = Http::withToken(config('services.tmdb.token'))
+                ->get('https://api.themoviedb.org/3/movie/' . $random_id . '?append_to_response=credits,videos,images')
+                ->json();
+        } while (array_key_exists('success', $movie) && !$movie['success']);
+
+
+        $viewModel = new MovieViewModel($movie);
+
+        $myRating = null;
+        if(Auth::user()){
+            $myRating = auth()->user()->rate($movie['id']);
+        }
+        $allComments = Comment::where('tmdb_id', $movie['id'])->with('user:id,name')->get();
+
+        $viewModel = new MovieViewModel($movie);
+
+        return view('movies.show', $viewModel, ['myRating' => $myRating, 'allComments' => $allComments]);
     }
 }

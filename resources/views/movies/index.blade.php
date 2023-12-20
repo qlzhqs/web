@@ -1,6 +1,13 @@
 @extends('layouts.main')
 
 @section('content')
+    <section class="hero">
+        <div class="hero-content">
+            <h1 style="visibility: hidden" class="hero-title">Explore the Magical Forest</h1>
+            <p style="visibility: hidden" class="hero-description">Embark on an enchanted journey and uncover hidden wonders.</p>
+            <a href="{{route('random')}}" class="hero-button">GET RANDOM</a>
+        </div>
+    </section>
     <div class="container mx-auto px-8 pt-16">
         <div class="popular-movies">
             <h2 class="text-3xl uppercase tracking-wider text-orange-500 text-lg font-semibold">

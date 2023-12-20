@@ -41,4 +41,10 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function rate($tbmd_id)
+    {
+        return $this->hasMany('App\Models\Rating', 'user_id', 'id')->where('tmdb_id', $tbmd_id)->first();
+    }
+
 }
